@@ -782,7 +782,7 @@ Verificar los logs:
 
 ```bash
 cd ~/thingsboard-deploy-template
-docker compose logs -f thingsboard-ce
+docker compose logs -f tb-node
 ```
 
 Verificar contenedores:
@@ -829,7 +829,7 @@ docker stats
 ## Ver logs de ThingsBoard
 
 ```bash
-docker compose logs -f thingsboard-ce
+docker compose logs -f tb-node
 ```
 
 ---
