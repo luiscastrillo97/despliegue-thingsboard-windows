@@ -252,7 +252,7 @@ Get-ScheduledTaskInfo -TaskName $TaskName | Format-List LastRunTime, LastTaskRes
 # ------------------------------------------------------------
 # Mostrar contenido del script creado
 # ------------------------------------------------------------
-Write-Host "`nContenido de $BootScriptPath:" -ForegroundColor White
+Write-Host "`nContenido de $BootScriptPath :" -ForegroundColor White
 Get-Content $BootScriptPath
 
 # ------------------------------------------------------------
