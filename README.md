@@ -19,7 +19,7 @@ Esta sección resume el orden de ejecución de los scripts y comandos principale
 Ejecutar primero la validación inicial de virtualización:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion_v2.ps1
+.\fase0_paso1_verificar_virtualizacion.ps1
 ```
 
 Habilitar las características requeridas de Windows:
@@ -37,13 +37,13 @@ Restart-Computer
 Después del reinicio, ejecutar nuevamente la validación de virtualización:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion_v2.ps1
+.\fase0_paso1_verificar_virtualizacion.ps1
 ```
 
 Instalar o actualizar WSL2 e instalar Ubuntu:
 
 ```powershell
-.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+.\fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
 Si Windows solicita reinicio, reiniciar nuevamente el servidor.
@@ -288,9 +288,9 @@ Se recomienda ubicar los scripts en una carpeta del repositorio, por ejemplo:
 
 ```text
 scripts/
-├── fase0_paso1_verificar_virtualizacion_v2.ps1
+├── fase0_paso1_verificar_virtualizacion.ps1
 ├── fase1_paso1_habilitar_ambientes_virtualizacion.ps1
-├── fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+├── fase1_paso2_instalar_wsl2_ubuntu.ps1
 ├── fase3_instalar_configurar_docker_ubuntu.sh
 ├── fase4_paso1_clonar_repo_crear_env_ubuntu.sh
 ├── fase4_paso2_crear_servicios_docker_ubuntu.sh
@@ -352,7 +352,7 @@ De acuerdo con las pruebas realizadas, el orden recomendado es:
 Script:
 
 ```text
-fase0_paso1_verificar_virtualizacion_v2.ps1
+fase0_paso1_verificar_virtualizacion.ps1
 ```
 
 Este script valida si el servidor cuenta con la virtualización habilitada para continuar con WSL2 y Docker.
@@ -360,7 +360,7 @@ Este script valida si el servidor cuenta con la virtualización habilitada para 
 Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion_v2.ps1
+.\fase0_paso1_verificar_virtualizacion.ps1
 ```
 
 El comando base utilizado por el script es:
@@ -429,7 +429,7 @@ Al finalizar, reiniciar Windows Server 2022.
 Después de reiniciar el servidor, se recomienda ejecutar nuevamente:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion_v2.ps1
+.\fase0_paso1_verificar_virtualizacion.ps1
 ```
 
 Esto permite confirmar que el sistema ya cumple el escenario esperado antes de instalar WSL2 y Ubuntu.
@@ -441,7 +441,7 @@ Esto permite confirmar que el sistema ya cumple el escenario esperado antes de i
 Script recomendado:
 
 ```text
-fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
 Esta versión del script fue ajustada para reducir errores durante la instalación de Ubuntu, especialmente el error:
@@ -455,7 +455,7 @@ Error Code: 0x8000ffff
 Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
-.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+.\fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
 El script realiza, entre otras acciones:
@@ -494,7 +494,7 @@ wsl --shutdown
 Luego volver a ejecutar:
 
 ```powershell
-.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+.\fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
 ---
@@ -948,7 +948,7 @@ wsl --shutdown
 Luego volver a ejecutar:
 
 ```powershell
-.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+.\fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
 ---
