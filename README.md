@@ -6,7 +6,240 @@ El objetivo es reducir la intervención manual durante la instalación, configur
 
 ---
 
-## 1. Arquitectura general del despliegue
+# Resumen de despliegue rápido
+
+Esta sección resume el orden de ejecución de los scripts y comandos principales para realizar el despliegue de ThingsBoard CE sobre **Windows Server 2022 + WSL2 + Ubuntu + Docker**.
+
+> Para detalles, validaciones, explicación de errores y recomendaciones, consulte las secciones posteriores del documento.
+
+---
+
+## 1. En Windows PowerShell
+
+Ejecutar primero la validación inicial de virtualización:
+
+```powershell
+.\fase0_paso1_verificar_virtualizacion_v2.ps1
+```
+
+Habilitar las características requeridas de Windows:
+
+```powershell
+.\fase1_paso1_habilitar_ambientes_virtualizacion.ps1
+```
+
+Reiniciar el servidor:
+
+```powershell
+Restart-Computer
+```
+
+Después del reinicio, ejecutar nuevamente la validación de virtualización:
+
+```powershell
+.\fase0_paso1_verificar_virtualizacion_v2.ps1
+```
+
+Instalar o actualizar WSL2 e instalar Ubuntu:
+
+```powershell
+.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
+```
+
+Si Windows solicita reinicio, reiniciar nuevamente el servidor.
+
+---
+
+## 2. En Ubuntu / WSL
+
+Abrir Ubuntu desde el menú de inicio y crear el usuario y contraseña de Linux.
+
+Verificar que `systemd` esté activo:
+
+```bash
+ps -p 1 -o comm=
+```
+
+El resultado esperado es:
+
+```text
+systemd
+```
+
+Si no aparece `systemd`, crear o editar el archivo:
+
+```bash
+sudo nano /etc/wsl.conf
+```
+
+Agregar:
+
+```ini
+[boot]
+systemd=true
+```
+
+Luego, desde PowerShell, cerrar WSL:
+
+```powershell
+wsl --shutdown
+```
+
+Volver a abrir Ubuntu y verificar nuevamente:
+
+```bash
+ps -p 1 -o comm=
+```
+
+---
+
+## 3. Instalar Docker en Ubuntu
+
+Ejecutar en Ubuntu:
+
+```bash
+chmod +x fase3_instalar_configurar_docker_ubuntu.sh && ./fase3_instalar_configurar_docker_ubuntu.sh
+```
+
+Verificar Docker:
+
+```bash
+docker --version
+docker compose version
+sudo systemctl status docker
+```
+
+---
+
+## 4. Clonar el proyecto y crear el archivo `.env`
+
+Ejecutar en Ubuntu:
+
+```bash
+chmod +x fase4_paso1_clonar_repo_crear_env_ubuntu.sh && ./fase4_paso1_clonar_repo_crear_env_ubuntu.sh
+```
+
+Este paso clona el repositorio:
+
+```bash
+git clone https://github.com/luiscastrillo97/thingsboard-deploy-template.git
+```
+
+y crea el archivo `.env` dentro de la carpeta del proyecto.
+
+**Nota:** _Se recomienda cambiar al menos la `contraseña` y el `puerto` mediante el cual se expone el servicio de PostgreSQL._
+
+_Ver ejemplo de archivo `.env` [aquí](#paso-1-clonar-repositorio-y-crear-archivo-env)_
+
+---
+
+## 5. Inicializar y levantar ThingsBoard
+
+Ejecutar en Ubuntu:
+
+```bash
+chmod +x fase4_paso2_crear_servicios_docker_ubuntu.sh && ./fase4_paso2_crear_servicios_docker_ubuntu.sh
+```
+
+Comandos principales ejecutados por el script:
+
+```bash
+docker compose run --rm -e INSTALL_TB=true -e LOAD_DEMO=true thingsboard-ce
+docker compose up -d
+```
+
+Verificar los contenedores:
+
+```bash
+cd ~/thingsboard-deploy-template
+docker compose ps
+```
+
+Ver logs:
+
+```bash
+docker compose logs -f
+```
+
+Acceso local esperado:
+
+```text
+http://localhost:8080
+```
+
+---
+
+## 6. Crear tarea programada para iniciar WSL/Docker en Windows Server 2022
+
+Volver a **Windows PowerShell como Administrador** y ejecutar:
+
+```powershell
+.\fase5_paso1_crear_tarea_wsl_boot_windows_server_2022.ps1
+```
+
+Verificar la tarea:
+
+```powershell
+Get-ScheduledTask -TaskName "WSL-Boot"
+Get-ScheduledTaskInfo -TaskName "WSL-Boot"
+```
+
+Ejecutarla manualmente si es necesario:
+
+```powershell
+Start-ScheduledTask -TaskName "WSL-Boot"
+```
+
+---
+
+## 7. Paso opcional: crear servicio `tb-stack` en Ubuntu
+
+Este paso es opcional. Se usa si los servicios Docker Compose no se levantan automáticamente al iniciar WSL.
+
+Ejecutar en Ubuntu:
+
+```bash
+chmod +x fase5_paso2_crear_servicio_tb_stack_ubuntu.sh && ./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh
+```
+
+O indicando manualmente la ruta del proyecto:
+
+```bash
+chmod +x fase5_paso2_crear_servicio_tb_stack_ubuntu.sh && ./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh /home/usuario/thingsboard-deploy-template
+```
+
+Verificar el servicio:
+
+```bash
+sudo systemctl status tb-stack
+```
+
+---
+
+## 8. Verificación final rápida
+
+En Ubuntu:
+
+```bash
+cd ~/thingsboard-deploy-template
+docker compose ps
+docker compose logs -f thingsboard-ce
+sudo systemctl status docker
+```
+
+En Windows PowerShell:
+
+```powershell
+wsl --list --verbose
+wsl --status
+Get-ScheduledTaskInfo -TaskName "WSL-Boot"
+```
+
+---
+
+# Introducción al Despliegue de ThingsBoard en Windows Server 2022
+
+## Arquitectura general del despliegue
 
 La arquitectura propuesta es:
 
@@ -26,7 +259,7 @@ El stack de servicios se ejecuta dentro de Ubuntu/WSL2 mediante Docker Compose.
 
 ---
 
-## 2. Requisitos previos
+## Requisitos previos
 
 ### Sistema operativo
 
@@ -49,15 +282,15 @@ El stack de servicios se ejecuta dentro de Ubuntu/WSL2 mediante Docker Compose.
 
 ---
 
-## 3. Scripts incluidos
+## Scripts incluidos
 
 Se recomienda ubicar los scripts en una carpeta del repositorio, por ejemplo:
 
 ```text
 scripts/
-├── fase0_paso1_verificar_virtualizacion.ps1
+├── fase0_paso1_verificar_virtualizacion_v2.ps1
 ├── fase1_paso1_habilitar_ambientes_virtualizacion.ps1
-├── fase1_paso2_instalar_wsl2_ubuntu.ps1
+├── fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
 ├── fase3_instalar_configurar_docker_ubuntu.sh
 ├── fase4_paso1_clonar_repo_crear_env_ubuntu.sh
 ├── fase4_paso2_crear_servicios_docker_ubuntu.sh
@@ -69,7 +302,7 @@ scripts/
 
 ---
 
-# 4. Orden recomendado de ejecución
+## Orden recomendado de ejecución
 
 De acuerdo con las pruebas realizadas, el orden recomendado es:
 
@@ -119,15 +352,15 @@ De acuerdo con las pruebas realizadas, el orden recomendado es:
 Script:
 
 ```text
-fase0_paso1_verificar_virtualizacion.ps1
+fase0_paso1_verificar_virtualizacion_v2.ps1
 ```
 
 Este script valida si el servidor cuenta con la virtualización habilitada para continuar con WSL2 y Docker.
 
-Ejecutar en **Windows PowerShell**:
+Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
+.\fase0_paso1_verificar_virtualizacion_v2.ps1
 ```
 
 El comando base utilizado por el script es:
@@ -173,7 +406,7 @@ fase1_paso1_habilitar_ambientes_virtualizacion.ps1
 
 Este script habilita las características necesarias para WSL2, Hyper-V y Docker.
 
-Ejecutar en **Windows PowerShell**:
+Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
 .\fase1_paso1_habilitar_ambientes_virtualizacion.ps1
@@ -196,7 +429,7 @@ Al finalizar, reiniciar Windows Server 2022.
 Después de reiniciar el servidor, se recomienda ejecutar nuevamente:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
+.\fase0_paso1_verificar_virtualizacion_v2.ps1
 ```
 
 Esto permite confirmar que el sistema ya cumple el escenario esperado antes de instalar WSL2 y Ubuntu.
@@ -208,7 +441,7 @@ Esto permite confirmar que el sistema ya cumple el escenario esperado antes de i
 Script recomendado:
 
 ```text
-fase1_paso2_instalar_wsl2_ubuntu.ps1
+fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
 ```
 
 Esta versión del script fue ajustada para reducir errores durante la instalación de Ubuntu, especialmente el error:
@@ -222,8 +455,7 @@ Error Code: 0x8000ffff
 Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
-Set-ExecutionPolicy RemoteSigned -Scope Process
-.\fase1_paso2_instalar_wsl2_ubuntu.ps1
+.\fase1_paso2_instalar_wsl2_ubuntu_v2.ps1
 ```
 
 El script realiza, entre otras acciones:
@@ -340,9 +572,7 @@ Este script automatiza la instalación de Docker usando el repositorio oficial d
 Ejecutar en **Ubuntu**:
 
 ```bash
-chmod +x fase3_instalar_configurar_docker_ubuntu.sh
-
-./fase3_instalar_configurar_docker_ubuntu.sh
+chmod +x fase3_instalar_configurar_docker_ubuntu.sh && ./fase3_instalar_configurar_docker_ubuntu.sh
 ```
 
 El script realiza:
@@ -398,9 +628,7 @@ y crea un archivo `.env` con las variables requeridas.
 Ejecutar en **Ubuntu**:
 
 ```bash
-chmod +x fase4_paso1_clonar_repo_crear_env_ubuntu.sh
-
-./fase4_paso1_clonar_repo_crear_env_ubuntu.sh
+chmod +x fase4_paso1_clonar_repo_crear_env_ubuntu.sh && ./fase4_paso1_clonar_repo_crear_env_ubuntu.sh
 ```
 
 Contenido generado del archivo `.env`:
@@ -428,19 +656,7 @@ TB_COAP_UDP_PORT_RANGE=5683-5688
 
 Si ya existe un archivo `.env`, el script crea una copia de seguridad antes de sobrescribirlo.
 
-Para modificar el archivo `.env` se debe ingresar a la carpeta del proyecto: 
-
-```bash
-cd thingsboard-deploy-template
-```
-
-Y luego, editar el archivo usanso `nano`:
-
-```bash
-sudo nano .env
-```
-
-Se recomienda cambiar al menos la contraseña y el puerto de postgres, si se habilitarán las conexiones desde un cliente externo.
+**Nota:** _Se recomienda cambiar al menos la `contraseña` y el `puerto` mediante el cual se expone el servicio de PostgreSQL._
 
 ---
 
@@ -457,9 +673,7 @@ Este script inicializa ThingsBoard y luego levanta los servicios con Docker Comp
 Ejecutar en **Ubuntu**:
 
 ```bash
-chmod +x fase4_paso2_crear_servicios_docker_ubuntu.sh
-
-./fase4_paso2_crear_servicios_docker_ubuntu.sh
+chmod +x fase4_paso2_crear_servicios_docker_ubuntu.sh && ./fase4_paso2_crear_servicios_docker_ubuntu.sh
 ```
 
 Comandos ejecutados internamente:
@@ -572,15 +786,13 @@ tb-stack.service
 Ejecutar en **Ubuntu**:
 
 ```bash
-chmod +x fase5_paso2_crear_servicio_tb_stack_ubuntu.sh
-
-./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh
+chmod +x fase5_paso2_crear_servicio_tb_stack_ubuntu.sh && ./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh
 ```
 
-También puede indicarse manualmente la ruta donde se encuentra el archivo `docker-compose.yml`:
+También puede indicarse manualmente la ruta donde se encuentra el archivo `docker-compose.yml`. El formato recomendado sigue siendo primero asignar permisos y luego ejecutar:
 
 ```bash
-./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh /home/usuario/thingsboard-deploy-template
+chmod +x fase5_paso2_crear_servicio_tb_stack_ubuntu.sh && ./fase5_paso2_crear_servicio_tb_stack_ubuntu.sh /home/usuario/thingsboard-deploy-template
 ```
 
 El script crea:
@@ -782,7 +994,7 @@ Verificar los logs:
 
 ```bash
 cd ~/thingsboard-deploy-template
-docker compose logs -f tb-node
+docker compose logs -f thingsboard-ce
 ```
 
 Verificar contenedores:
@@ -829,7 +1041,7 @@ docker stats
 ## Ver logs de ThingsBoard
 
 ```bash
-docker compose logs -f tb-node
+docker compose logs -f thingsboard-ce
 ```
 
 ---
