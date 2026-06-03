@@ -14,18 +14,18 @@ Esta sección resume el orden de ejecución de los scripts y comandos principale
 
 ---
 
+## 0. Descargar archivo .zip del repositorio y descomprimirlo
+
+Descargar archivo .zip que contiene los scripts de despliegue en Windows. Descomprimir la carpeta y una vez dentro de la carpeta donde están los scripts, abrir PowerShell en esa ubicación.
+
+---
+
 ## 1. En Windows PowerShell
-
-Ejecutar primero la validación inicial de virtualización:
-
-```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
-```
 
 Habilitar las características requeridas de Windows:
 
 ```powershell
-.\fase1_paso1_habilitar_ambientes_virtualizacion.ps1
+.\fase0_paso1_habilitar_ambientes_virtualizacion.ps1
 ```
 
 Reiniciar el servidor:
@@ -34,11 +34,14 @@ Reiniciar el servidor:
 Restart-Computer
 ```
 
-Después del reinicio, ejecutar nuevamente la validación de virtualización:
+Después del reinicio, ejecutar la validación de virtualización:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
+.\fase1_paso1_verificar_virtualizacion.ps1
 ```
+---
+
+## 2. Instalar Ubuntu / WSL
 
 Instalar o actualizar WSL2 e instalar Ubuntu:
 
@@ -46,11 +49,15 @@ Instalar o actualizar WSL2 e instalar Ubuntu:
 .\fase1_paso2_instalar_wsl2_ubuntu.ps1
 ```
 
-Si Windows solicita reinicio, reiniciar nuevamente el servidor.
+El sistema le solicitará crear usuario y contraseña en Ubuntu, por lo que va a ser necesario que introduzca los campos requeridos.
 
----
+Al finalizar salga de WSL:
 
-## 2. En Ubuntu / WSL
+```powershell
+exit
+```
+
+### Paso opcional, pero, útil: Validar que systemd esté activo
 
 Abrir Ubuntu desde el menú de inicio y crear el usuario y contraseña de Linux.
 
@@ -94,6 +101,20 @@ ps -p 1 -o comm=
 ---
 
 ## 3. Instalar Docker en Ubuntu
+
+Se sugiere que ingrese a WSL realizando la búsqueda en la barra de Windows y elegir Ubuntu. Una vez dentro de Ubuntu, se recomienda crear una carpeta y clonar el repositorio de los scripts de despliegue dentro de esa carpeta usando el comando:
+
+```bash
+git clone https://github.com/luiscastrillo97/despliegue-thingsboard-windows.git .
+```
+
+Asimismo, se recomienda entrar como usuario root en Ubuntu, ingresando:
+
+```bash
+sudo su
+```
+
+Ahora sí. Vamos!
 
 Ejecutar en Ubuntu:
 
@@ -165,6 +186,22 @@ Acceso local esperado:
 
 ```text
 http://localhost:8080
+```
+
+las credenciales comunes de ThingsBoard son:
+
+```text
+Tenant Administrator:
+usename: tenant@thingsboard.org
+password: tenant
+
+Customer User:
+username: customer@thingsboard.org
+password: customer
+
+System Administrator:
+username: sysadmin@thingsboard.org
+password: sysadmin
 ```
 
 ---
@@ -288,8 +325,8 @@ Se recomienda ubicar los scripts en una carpeta del repositorio, por ejemplo:
 
 ```text
 scripts/
-├── fase0_paso1_verificar_virtualizacion.ps1
-├── fase1_paso1_habilitar_ambientes_virtualizacion.ps1
+├── fase0_paso1_habilitar_ambientes_virtualizacion.ps1
+├── fase1_paso1_verificar_virtualizacion.ps1
 ├── fase1_paso2_instalar_wsl2_ubuntu.ps1
 ├── fase3_instalar_configurar_docker_ubuntu.sh
 ├── fase4_paso1_clonar_repo_crear_env_ubuntu.sh
@@ -297,8 +334,6 @@ scripts/
 ├── fase5_paso1_crear_tarea_wsl_boot_windows_server_2022.ps1
 └── fase5_paso2_crear_servicio_tb_stack_ubuntu.sh
 ```
-
-> La Fase 6 de exposición de puertos no se incluye en este README.
 
 ---
 
@@ -308,51 +343,78 @@ De acuerdo con las pruebas realizadas, el orden recomendado es:
 
 ```text
 1. Fase 0 - Paso 1
-   Verificar virtualización en Windows.
-
-2. Fase 1 - Paso 1
    Habilitar características de virtualización en Windows.
 
-3. Reiniciar Windows Server 2022.
+2. Reiniciar Windows Server 2022.
 
-4. Fase 0 - Paso 1, nuevamente
-   Validar que después del reinicio se cumple el escenario esperado.
+3. Fase 1 - Paso 1
+   Verificar virtualización en Windows.
 
-5. Fase 1 - Paso 2
+4. Fase 1 - Paso 2
    Instalar / actualizar WSL2 e instalar Ubuntu.
 
-6. Abrir Ubuntu por primera vez.
+5. Abrir Ubuntu por primera vez.
    Crear usuario y contraseña.
 
-7. Fase 2 - Paso 1, manual
+6. Fase 2 - Paso 1, manual
    Verificar o habilitar systemd en Ubuntu.
 
-8. Fase 3
+7. Fase 3
    Instalar y configurar Docker en Ubuntu.
 
-9. Fase 4 - Paso 1
+8. Fase 4 - Paso 1
    Clonar repositorio y crear archivo .env.
 
-10. Fase 4 - Paso 2
+9. Fase 4 - Paso 2
    Inicializar y levantar servicios Docker Compose.
 
-11. Fase 5 - Paso 1
+10. Fase 5 - Paso 1
    Crear tarea programada WSL-Boot en Windows Server 2022.
 
-12. Fase 5 - Paso 2, opcional
+11. Fase 5 - Paso 2, opcional
    Crear servicio tb-stack.service en Ubuntu.
 ```
 
 ---
 
-# Fase 0. Validación inicial del servidor
+# Fase 0. Habilitación de ambientes de virtualización
+
+## Paso 1. Habilitar características de Windows
+
+Script:
+
+```text
+fase0_paso1_habilitar_ambientes_virtualizacion.ps1
+```
+
+Este script habilita las características necesarias para WSL2, Hyper-V y Docker.
+
+Ejecutar en **Windows PowerShell como Administrador**:
+
+```powershell
+.\fase0_paso1_habilitar_ambientes_virtualizacion.ps1
+```
+
+El script ejecuta internamente comandos equivalentes a:
+
+```powershell
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -All -NoRestart
+Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -All -NoRestart
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
+```
+
+Al finalizar, reiniciar Windows Server 2022.
+
+---
+
+# Fase 1. Validación inicial del servidor
 
 ## Paso 1. Verificar virtualización en Windows
 
 Script:
 
 ```text
-fase0_paso1_verificar_virtualizacion.ps1
+fase1_paso1_verificar_virtualizacion.ps1
 ```
 
 Este script valida si el servidor cuenta con la virtualización habilitada para continuar con WSL2 y Docker.
@@ -360,7 +422,7 @@ Este script valida si el servidor cuenta con la virtualización habilitada para 
 Ejecutar en **Windows PowerShell como Administrador**:
 
 ```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
+.\fase1_paso1_verificar_virtualizacion.ps1
 ```
 
 El comando base utilizado por el script es:
@@ -394,49 +456,13 @@ Si `VirtualizationFirmwareEnabled` aparece como `False`, se debe ingresar a la B
 
 ---
 
-# Fase 1. Habilitación de ambientes de virtualización
-
-## Paso 1. Habilitar características de Windows
-
-Script:
-
-```text
-fase1_paso1_habilitar_ambientes_virtualizacion.ps1
-```
-
-Este script habilita las características necesarias para WSL2, Hyper-V y Docker.
-
-Ejecutar en **Windows PowerShell como Administrador**:
-
-```powershell
-.\fase1_paso1_habilitar_ambientes_virtualizacion.ps1
-```
-
-El script ejecuta internamente comandos equivalentes a:
-
-```powershell
-Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -All -NoRestart
-Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -All -NoRestart
-Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All -NoRestart
-```
-
-Al finalizar, reiniciar Windows Server 2022.
-
----
-
-## Validación posterior al reinicio
-
-Después de reiniciar el servidor, se recomienda ejecutar nuevamente:
-
-```powershell
-.\fase0_paso1_verificar_virtualizacion.ps1
-```
-
-Esto permite confirmar que el sistema ya cumple el escenario esperado antes de instalar WSL2 y Ubuntu.
-
----
-
 ## Paso 2. Instalar WSL2 y Ubuntu
+
+Asimismo, se recomienda entrar como usuario root en Ubuntu, ingresando:
+
+```bash
+sudo su
+```
 
 Script recomendado:
 
